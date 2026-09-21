@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables - KEEP YOUR SECRETS SAFE!
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Large PDFs (keep metadata only)
+*.pdf
+
+# Generated data files
+*.jsonl
+chunks.jsonl
+legal_containers.jsonl
+eval_results_*.jsonl
+
+# Database files
+*.db
+
+# Large video files (optional)
+# assets/demo.mp4
+
+# System files
+.DS_Store
+Thumbs.db
+system.png

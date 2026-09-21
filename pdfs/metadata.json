@@ -1,0 +1,48 @@
+{
+  "Ethiopia_Constitution": {
+    "title": "Constitution of the Federal Democratic Republic of Ethiopia",
+    "category": "constitutional",
+    "date": "1995-12-08",
+    "document_id": "FDRE_CONSTITUTION_1995",
+    "description": "The supreme law of Ethiopia",
+    "skip_pages": 0,
+    "toc_pages": 0
+  },
+  "Civil_Code": {
+    "title": "Civil Code of the Empire of Ethiopia",
+    "category": "civil_law",
+    "date": "1960-05-16",
+    "document_id": "CIVIL_CODE_1960",
+    "description": "The main civil law legislation"
+  },
+  "New_Commercial_Code": {
+    "title": "Commercial Code of the Federal Democratic Republic of Ethiopia",
+    "category": "commercial_law",
+    "date": "2021-04-12",
+    "document_id": "COMMERCIAL_CODE_2021",
+    "description": "Revised commercial code, Proclamation No. 1243/2021",
+    "skip_pages": 59
+  },
+  "Commercial_Code": {
+    "title": "Commercial Code of the Empire of Ethiopia",
+    "category": "commercial_law",
+    "date": "1960-05-16",
+    "document_id": "COMMERCIAL_CODE_1960",
+    "description": "Governs commercial transactions"
+  },
+  "Criminal_Code": {
+    "title": "Criminal Code of the Federal Democratic Republic of Ethiopia",
+    "category": "criminal_law",
+    "date": "2004-01-01",
+    "document_id": "CRIMINAL_CODE_2004",
+    "description": "Main criminal law of Ethiopia, Proclamation No. 414/2004",
+    "skip_pages": 53
+  },
+  "Labor_Proclamation": {
+    "title": "Labour Proclamation No. 42/1993",
+    "category": "labor_law",
+    "date": "1993-04-06",
+    "document_id": "PROCLAMATION_42_1993",
+    "description": "Establishes labor rights and responsibilities"
+  }
+}
