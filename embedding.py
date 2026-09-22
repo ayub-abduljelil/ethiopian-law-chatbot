@@ -1,16 +1,19 @@
 import torch
-from transformers import AutoTokenizer, AutoModel
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 
 class Embedding:
     """
-    Local sentence embedding using multilingual-e5-small (384-dim).
+    Local sentence embedding using the fine-tuned
+    multilingual-e5-small (384-dim).
+
     Used for both ingestion (batch) and query-time (single).
     """
 
     def __init__(
         self,
-        model_name: str = "intfloat/multilingual-e5-small"
+        model_name: str = "./e5-multilingual-small-law-deploy"
     ):
         self.model_name = model_name
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -20,31 +23,17 @@ class Embedding:
             f"on {self.device}..."
         )
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_name
+        self.model = SentenceTransformer(
+            self.model_name,
+            device=self.device
         )
-
-        self.model = AutoModel.from_pretrained(
-            self.model_name
-        ).to(self.device)
 
         self.model.eval()
 
-        print("[Embedding] Ready.")
-
-    def _mean_pool(
-        self,
-        last_hidden_state: torch.Tensor,
-        attention_mask: torch.Tensor,
-    ) -> torch.Tensor:
-
-        mask = attention_mask.unsqueeze(-1).float()
-
-        summed = (last_hidden_state * mask).sum(dim=1)
-
-        counts = mask.sum(dim=1).clamp(min=1e-9)
-
-        return summed / counts
+        print(
+            "[Embedding] Ready. "
+            f"Dimension: {self.model.get_sentence_embedding_dimension()}"
+        )
 
     def get_embeddings(
         self,
@@ -68,34 +57,17 @@ class Embedding:
             for text in texts
         ]
 
-        encoded = self.tokenizer(
+        embeddings = self.model.encode(
             texts,
-            padding=True,
-            truncation=True,
-            max_length=512,
-            return_tensors="pt",
+            batch_size=64,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+            show_progress_bar=False,
         )
 
-        encoded = {
-            k: v.to(self.device)
-            for k, v in encoded.items()
-        }
-
-        with torch.no_grad():
-            output = self.model(**encoded)
-
-        embeddings = self._mean_pool(
-            output.last_hidden_state,
-            encoded["attention_mask"]
+        return torch.from_numpy(
+            embeddings.astype(np.float32)
         )
-
-        embeddings = torch.nn.functional.normalize(
-            embeddings,
-            p=2,
-            dim=1
-        )
-
-        return embeddings.cpu()
 
     def _embed_one(
         self,

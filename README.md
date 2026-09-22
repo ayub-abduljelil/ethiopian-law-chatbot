@@ -1,135 +1,236 @@
 # ⚖️ Ethiopian Legal RAG Assistant
 
-A semantic search and RAG (Retrieval-Augmented Generation) application for Ethiopian legal documents.
+An AI-powered legal research platform that lets you ask questions about Ethiopian law in plain language and get precise, cited answers. It uses semantic search over a fully embedded knowledge base of Ethiopian legal codes to find relevant articles, then generates grounded answers with Gemini.
 
-## Overview
+![Demo](assets/demo.mp4)
 
-This platform allows users to search and query Ethiopian law using natural language. It indexes major legal codes and the Constitution, then uses AI to provide accurate, cited answers to legal questions.
+---
 
-## Features
+## What's inside
 
-- **Full Legal Corpus**: Civil Code, Criminal Code, Commercial Code, Family Code, Maritime Code, Civil Procedure Code, and Constitution
-- **Hierarchical Retrieval**: Two-step search for more accurate results
-- **Instant AI Answers**: Natural language questions get cited responses
-- **User Authentication**: Secure accounts with conversation history
-- **Theme Toggle**: Dark and light mode support
+| Layer | Technology |
+|---|---|
+| UI | Streamlit |
+| LLM | Google Gemini (via `google-genai`) |
+| Embeddings | Fine-tuned multilingual-e5-small (384-dim, local model) |
+| Vector search | PostgreSQL + pgvector |
+| PDF parsing | pdfplumber |
+| Auth | bcrypt |
 
-## Tech Stack
+**Legal corpus indexed:**
+- Constitution of the Federal Democratic Republic of Ethiopia (1995)
+- Civil Code (1960)
+- Criminal Code (2004)
+- Commercial Code — old (1960) and new (2021)
+- Family Code
+- Maritime Code
+- Civil Procedure Code
 
-- **Frontend**: Streamlit
-- **Database**: PostgreSQL with pgvector
-- **Embeddings**: Sentence Transformers (MiniLM-L6-v2)
-- **LLM**: OpenRouter API
-- **PDF Processing**: PyMuPDF for legal document parsing
+---
 
-## Setup
+## Quickstart
 
-### Prerequisites
+### 1. Clone the repo
 
-- Python 3.10+
-- PostgreSQL with pgvector extension
-- OpenRouter API key
-
-### Installation
-
-1. Clone the repository:
 ```bash
-git clone <your-repo-url>
-cd first-rag
+git clone https://github.com/YOUR_USERNAME/ethiopian-legal-rag.git
+cd ethiopian-legal-rag
 ```
 
-2. Create virtual environment:
+### 2. Create a virtual environment
+
 ```bash
 python -m venv .venv
-.venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
+
+# Windows
+.venv\Scripts\activate
+
+# macOS / Linux
+source .venv/bin/activate
 ```
 
-3. Install dependencies:
+### 3. Download the embedding model
+
+The fine-tuned embedding model weights are not stored in this repo (465 MB). Download them from HuggingFace and place them at `e5-multilingual-small-law-deploy/`:
+
+```bash
+# Install the HuggingFace CLI if you don't have it
+pip install huggingface_hub
+
+# Download the model
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='RARAS-Tech/e5-multilingual-small-law',
+    local_dir='e5-multilingual-small-law-deploy'
+)
+"
+```
+
+> **Don't have the model yet?** Contact the maintainer for the HuggingFace repo link, or provide the model files directly.
+
+### 4. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Create `.env` file with your credentials:
+> **Note on PyTorch:** The pinned version `torch==2.13.0` is the CUDA 12.6 build.
+> If you don't have a GPU or have a different CUDA version, install the right build first:
+> ```bash
+> # CPU only
+> pip install torch --index-url https://download.pytorch.org/whl/cpu
+> # Then install the rest
+> pip install -r requirements.txt --ignore-installed torch
+> ```
+
+### 5. Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in your values:
+
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/legal_db
-OPENROUTER_API_KEY=your_key_here
+GOOGLE_API_KEY=your_google_api_key_here
+
+PGHOST=...
+PGPORT=5432
+PGDATABASE=...
+PGUSER=...
+PGPASSWORD=...
 ```
 
-5. Initialize the database:
-```bash
-python db_pgvector.py
-```
+- **Google API key** → [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) (free)
+- **Database credentials** → see section below
 
-6. Ingest legal documents:
-```bash
-python ingest_to_pg.py
-```
+### 6. Connect to the hosted database
 
-7. Run the application:
+The legal corpus — all PDFs parsed, chunked, and embedded — is already loaded into a hosted PostgreSQL instance with pgvector. You do **not** need to run ingestion yourself.
+
+**Contact the maintainer for the database credentials** and drop them into your `.env`.  
+The database contains:
+- ~5,000+ article chunks with 384-dim embeddings
+- Hierarchical legal containers (Books, Parts, Titles, Chapters, Sections)
+- Full metadata for all 7 legal codes
+
+### 7. Run the app
+
 ```bash
 streamlit run main.py
 ```
 
-## Project Structure
+Open [http://localhost:8501](http://localhost:8501) in your browser.
+
+---
+
+## How it works
 
 ```
-first-rag/
-├── main.py                  # Streamlit UI
-├── db_pgvector.py          # Database operations
-├── auth.py                 # User authentication
-├── embedding.py            # Embedding generation
-├── local_llm.py            # LLM interface
-├── legal_pdf_parser.py     # PDF processing
-├── ingest_to_pg.py         # Data ingestion script
-├── pdfs/                   # Legal documents
-│   ├── Ethiopian-Codes/
-│   └── metadata.json
-├── assets/                 # UI assets
+User question
+     │
+     ▼
+Rewrite to formal legal query (Gemini)
+     │
+     ▼
+Embed query  ──►  Search legal_containers (top 3)
+                       │
+                       ▼
+                  Search chunks inside each container (top 9 each)
+                       │
+                  Search chunks globally (top 5 direct)
+                       │
+                       ▼
+                  Rerank all candidates → keep top 12
+     │
+     ▼
+Build RAG prompt with retrieved articles
+     │
+     ▼
+Generate cited answer (Gemini)
+```
+
+---
+
+## Folder structure
+
+```
+ethiopian-legal-rag/
+├── main.py                   # Streamlit UI + retrieval orchestration
+├── auth.py                   # Register / login (bcrypt)
+├── db_pgvector.py            # All DB operations (chunks, containers, users, chats)
+├── embedding.py              # Local sentence-transformer wrapper
+├── local_llm.py              # Gemini client with fallback model logic
+├── legal_pdf_parser.py       # PDF → hierarchical containers + article chunks
+├── ingest_to_pg.py           # One-time ingestion script (already run, see below)
+├── eval_retrieval.py         # Retrieval evaluation harness
+├── generate_questions.py     # Eval dataset generator
+├── requirements.txt
+├── .env.example
+├── assets/
 │   ├── logo.png
 │   └── demo.mp4
-└── requirements.txt
+├── pdfs/
+│   ├── metadata.json         # Document titles, categories, skip-page config
+│   └── Ethiopian-Codes/
+│       └── metadata.json
+├── e5-multilingual-small-law-deploy/   # Local embedding model weights
+└── dev/                      # Dev/debug scripts (not needed to run the app)
 ```
 
-## Usage
+---
 
-1. **Sign Up**: Create an account on the landing page
-2. **Ask Questions**: Type legal questions in plain language
-3. **View Citations**: Get answers with article references
-4. **Browse History**: Access previous conversations from sidebar
-5. **Toggle Theme**: Switch between dark/light mode
+## Running ingestion yourself (optional)
 
-## Evaluation
+If you want to build your own database from scratch instead of using the hosted one:
 
-The system includes evaluation tools:
+1. Install PostgreSQL and enable the pgvector extension:
+   ```sql
+   CREATE EXTENSION vector;
+   ```
 
-- `eval_retrieval.py`: Test retrieval accuracy
-- `generate_questions.py`: Create test datasets
-- `compare_pg.py`: Compare retrieval strategies
+2. Place PDFs in `pdfs/` and update `pdfs/metadata.json` with their details.
 
-## Development
+3. Run ingestion:
+   ```bash
+   # Ingest all PDFs in a folder
+   python ingest_to_pg.py --pdfs-dir pdfs/ --verbose
 
-### Adding New Legal Documents
+   # Or ingest a single file
+   python ingest_to_pg.py --pdf pdfs/Ethiopian-Codes/Civil_Code.pdf --verbose
+   ```
 
-1. Place PDFs in `pdfs/` directory
-2. Update `pdfs/metadata.json` with document info
-3. Run ingestion: `python ingest_to_pg.py`
+   This will parse each PDF into hierarchical containers and article-level chunks, embed them with the local model, and upsert everything into Postgres. Expect it to take a while depending on corpus size.
 
-### Configuration
+---
 
-Edit these parameters in `main.py`:
-- `TOP_CONTAINERS`: Number of containers to retrieve (default: 3)
-- `CHUNKS_PER_CONT`: Chunks per container (default: 9)
-- `MAX_CHUNKS`: Maximum total chunks (default: 12)
+## Environment variables reference
+
+| Variable | Required | Description |
+|---|---|---|
+| `GOOGLE_API_KEY` | ✅ | Gemini API key from Google AI Studio |
+| `PGHOST` | ✅ | PostgreSQL host |
+| `PGPORT` | ✅ | PostgreSQL port (default `5432`) |
+| `PGDATABASE` | ✅ | Database name |
+| `PGUSER` | ✅ | Database user |
+| `PGPASSWORD` | ✅ | Database password |
+
+---
+
+## Retrieval parameters
+
+Tunable at the top of `main.py`:
+
+```python
+TOP_CONTAINERS  = 3   # How many top-level legal sections to retrieve
+CHUNKS_PER_CONT = 9   # Articles fetched per section
+DIRECT_CHUNKS   = 5   # Additional direct chunk search (no container filter)
+MAX_CHUNKS      = 12  # Hard cap on context sent to the LLM
+```
+
+---
 
 ## License
 
-© 2025 RARAS Technology
-
-## Contributing
-
-Contributions welcome! Please open an issue or submit a pull request.
-
-## Support
-
-For issues or questions, please contact the development team.
+© 2025 RARAS Technology. All rights reserved.

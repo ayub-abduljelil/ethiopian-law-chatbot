@@ -1,39 +1,38 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-
-# Virtual environments
-.venv/
-venv/
-ENV/
-env/
-
-# Environment variables - KEEP YOUR SECRETS SAFE!
+# ── Secrets ───────────────────────────────────────────────────────────────
 .env
 
-# IDEs
-.vscode/
-.idea/
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
 
-# Large PDFs (keep metadata only)
-*.pdf
+# ── Virtual environments ───────────────────────────────────────────────────
+.venv/
+venv/
+env/
 
-# Generated data files
+# ── Generated / cached data ───────────────────────────────────────────────
 *.jsonl
-chunks.jsonl
-legal_containers.jsonl
-eval_results_*.jsonl
-
-# Database files
 *.db
 
-# Large video files (optional)
+# ── PDFs (large binary files) ─────────────────────────────────────────────
+*.pdf
+
+# ── Large video assets ────────────────────────────────────────────────────
 # assets/demo.mp4
 
-# System files
+# ── Embedding model weights (465 MB — too large for GitHub) ───────────────
+# Weights are auto-downloaded by sentence-transformers on first run.
+# See README for the model name.
+e5-multilingual-small-law-deploy/
+
+# ── IDE ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── OS ────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
-system.png
