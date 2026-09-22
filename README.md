@@ -1,8 +1,6 @@
 # ⚖️ Ethiopian Legal RAG Assistant
 
-An AI-powered legal research platform that lets you ask questions about Ethiopian law in plain language and get precise, cited answers. It uses semantic search over a fully embedded knowledge base of Ethiopian legal codes to find relevant articles, then generates grounded answers with Gemini.
-
-![Demo](assets/demo.mp4)
+An AI-powered legal research platform that lets you ask questions about Ethiopian law in plain language and get precise, cited answers.
 
 ---
 
@@ -11,6 +9,8 @@ An AI-powered legal research platform that lets you ask questions about Ethiopia
 | Landing Page | Chat Interface | Auth |
 |---|---|---|
 | ![Landing](screenshots/1.png) | ![Chat](screenshots/2.png) | ![Auth](screenshots/3.png) |
+
+> 🎬 **[Watch the demo video](assets/demo.mp4)**
 
 ---
 
