@@ -6,6 +6,14 @@ An AI-powered legal research platform that lets you ask questions about Ethiopia
 
 ---
 
+## Screenshots
+
+| Landing Page | Chat Interface | Auth |
+|---|---|---|
+| ![Landing](screenshots/1.png) | ![Chat](screenshots/2.png) | ![Auth](screenshots/3.png) |
+
+---
+
 ## What's inside
 
 | Layer | Technology |
